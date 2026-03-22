@@ -1,235 +1,437 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth } from '../firebase';
-import { collection, addDoc, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
-import './UserSite.css'; 
+import { auth, db } from '../firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import './UserSite.css';
 
 function UserSite() {
-  const [currentView, setCurrentView] = useState('home'); 
+  // --- UI STATE ---
+  const [currentUser, setCurrentUser] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [user, setUser] = useState(null);
-  const [authData, setAuthData] = useState({ firstName: '', lastName: '', email: '', phone: '', password: '' });
-  const [booking, setBooking] = useState({ barber: 'Master Jay', service: 'Premium Haircut', date: '', time: '' });
-  const [msg, setMsg] = useState('');
+  const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
 
-  // FIREBASE AUTH LISTENER
+  // --- BOOKING STATE ---
+  const [activeView, setActiveView] = useState('services'); // 'services' or 'booking'
+  const [selectedService, setSelectedService] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+
+  // High-quality placeholder images for the gallery
+  const galleryImages = [
+    "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=1200",
+    "https://images.unsplash.com/photo-1593702284287-418d182fd9ff?auto=format&fit=crop&q=80&w=1200",
+    "https://images.unsplash.com/photo-1598908314732-07113901949b?auto=format&fit=crop&q=80&w=1200",
+    "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=1200"
+  ];
+
+  const servicesList = [
+    { id: 1, name: 'Premium Haircut', duration: '1 hr', price: '₱500', img: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=800', desc: 'Experience a top-tier haircut by our expert stylists for a fresh, stylish look.' },
+    { id: 2, name: 'Signature Fade', duration: '1 hr', price: '₱400', img: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=800', desc: 'Precision fading tailored to your head shape for a sharp, clean finish.' },
+    { id: 3, name: 'Buzz Cut', duration: '45 min', price: '₱350', img: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80&w=800', desc: 'A clean, uniform buzz cut completed with crisp line-ups.' },
+    { id: 4, name: 'Beard Trim & Sculpt', duration: '30 min', price: '₱250', img: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=800', desc: 'Detailed beard grooming, shaping, and a relaxing hot towel finish.' }
+  ];
+
+  const allTimes = [
+    '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+    '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM',
+    '3:00 PM', '3:30 PM', '4:00 PM'
+  ];
+
+  // Firebase Auth Listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => setUser(currentUser));
+    const unsubscribe = onAuthStateChanged(auth, (user) => setCurrentUser(user));
     return () => unsubscribe();
   }, []);
 
-  // AUTH FUNCTIONS 
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, authData.email, authData.password);
-      
-      // Save to your Firestore Database
-      await setDoc(doc(db, "Users", userCredential.user.uid), {
-        email: authData.email,
-        firstName: `${authData.firstName} ${authData.lastName}`,
-        userType: "Client",
-        uid: userCredential.user.uid
-      });
+  // Gallery Auto-Slide Effect
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentGalleryIndex((prevIndex) => (prevIndex + 1) % galleryImages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [galleryImages.length]);
 
-      setMsg(""); setCurrentView('home'); setDropdownOpen(false);
-      alert("SUCCESS! Account created and linked to database.");
-    } catch (err) { setMsg(err.message); }
+  // Fetch Booked Slots
+  useEffect(() => {
+    if (activeView === 'booking') {
+      fetchAvailableTimes(selectedDate);
+    }
+  }, [selectedDate, activeView]);
+
+  const fetchAvailableTimes = async (dateObj) => {
+    setIsLoadingSlots(true);
+    setSelectedTime(null);
+    try {
+      const dateString = dateObj.toISOString().split('T')[0];
+      const q = query(collection(db, 'Appointments'), where('date', '==', dateString));
+      const querySnapshot = await getDocs(q);
+      
+      const booked = [];
+      querySnapshot.forEach((doc) => booked.push(doc.data().time));
+      setBookedSlots(booked);
+    } catch (error) {
+      console.error("Error fetching slots:", error);
+    }
+    setIsLoadingSlots(false);
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleBookClick = (service) => {
+    setSelectedService(service);
+    setActiveView('booking');
+    setBookingSuccess(false);
+  };
+
+  const handleConfirmBooking = async () => {
+    if (!currentUser) {
+      alert("Please sign in to book an appointment.");
+      return window.location.href = '/signup';
+    }
+    if (!selectedTime) return alert("Please select a time slot.");
+
+    setIsBooking(true);
     try {
-      await signInWithEmailAndPassword(auth, authData.email, authData.password);
-      setMsg(""); setCurrentView('home'); setDropdownOpen(false);
-    } catch (err) { setMsg("Invalid credentials."); }
+      const dateString = selectedDate.toISOString().split('T')[0];
+      await addDoc(collection(db, 'Appointments'), {
+        service: selectedService.name,
+        price: selectedService.price,
+        date: dateString,
+        time: selectedTime,
+        userId: currentUser.uid,
+        userEmail: currentUser.email,
+        status: 'Confirmed',
+        createdAt: serverTimestamp()
+      });
+      
+      setBookingSuccess(true);
+      fetchAvailableTimes(selectedDate);
+    } catch (error) {
+      console.error("Booking error:", error);
+      alert("Failed to book appointment.");
+    }
+    setIsBooking(false);
   };
 
   const handleLogout = async () => {
     await signOut(auth);
-    setDropdownOpen(false); setCurrentView('home');
+    setDropdownOpen(false);
   };
 
-  // BOOKING FUNCTION
-  const handleBook = async (e) => {
-    e.preventDefault();
-    if (!user) return setMsg("Please sign in to book.");
-    
-    setMsg("Checking availability...");
-    const q = query(collection(db, "bookings"), where("barber", "==", booking.barber), where("date", "==", booking.date), where("time", "==", booking.time));
-    try {
-      const snap = await getDocs(q);
-      if (!snap.empty) return setMsg(`Slot taken! ${booking.barber} is booked.`);
-      
-      await addDoc(collection(db, "bookings"), { ...booking, clientEmail: user.email, status: "Pending" });
-      setMsg("APPOINTMENT CONFIRMED!");
-    } catch (err) { setMsg("System Error."); }
+  const scrollToServices = () => {
+    document.getElementById('services-section').scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // --- CALENDAR HELPERS ---
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+  
+  const currentYear = selectedDate.getFullYear();
+  const currentMonth = selectedDate.getMonth();
+  const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+  const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+  const monthName = selectedDate.toLocaleString('default', { month: 'long' });
+
+  const renderCalendar = () => {
+    const days = [];
+    const weekDays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    const headers = weekDays.map(day => <div key={day} className="cal-header">{day}</div>);
+
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="cal-day empty"></div>);
+    }
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateObj = new Date(currentYear, currentMonth, d);
+      const isPast = dateObj < today;
+      const isSelected = dateObj.toDateString() === selectedDate.toDateString();
+
+      days.push(
+        <div 
+          key={d} 
+          className={`cal-day ${isSelected ? 'selected' : ''} ${isPast ? 'disabled' : ''}`}
+          onClick={() => !isPast && setSelectedDate(dateObj)}
+        >
+          {d}
+        </div>
+      );
+    }
+
+    return (
+      <div className="calendar-widget">
+        <div className="cal-month-title">
+          <button onClick={() => setSelectedDate(new Date(currentYear, currentMonth - 1, 1))}>&lt;</button>
+          <span>{monthName} {currentYear}</span>
+          <button onClick={() => setSelectedDate(new Date(currentYear, currentMonth + 1, 1))}>&gt;</button>
+        </div>
+        <div className="cal-grid">
+          {headers}
+          {days}
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="user-site luxury-site" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      
+    <div className="user-site">
       {/* HEADER */}
       <header className="site-header">
-        <div className="logo" style={{cursor: 'pointer'}} onClick={() => setCurrentView('home')}>
-          FADEDSTUDIO
-        </div>
+        <div className="logo">FADEDSTUDIO</div>
         
-        <div className="header-center">
-          <span>✕</span>
-        </div>
-
         <div className="header-actions">
           <button className="icon-btn">
-            🛒 <span className="cart-badge">1</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span className="cart-badge">2</span>
           </button>
           
           <div style={{ position: 'relative' }}>
             <button className="icon-btn" onClick={() => setDropdownOpen(!dropdownOpen)}>
-              👤
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
             </button>
             
-            {/* DYNAMIC DROPDOWN */}
             {dropdownOpen && (
               <div className="profile-dropdown">
-                {user && (
-                  <p>Signed in as:<br/>
-                    <span style={{color: 'white', marginTop: '5px', display: 'block'}}>{user.email}</span>
-                  </p>
-                )}
-                
-                {!user ? (
+                {currentUser ? (
                   <>
-                    <button className="dropdown-link" onClick={() => {setCurrentView('login'); setDropdownOpen(false);}}>SIGN IN</button>
-                    <button className="dropdown-link" onClick={() => {setCurrentView('register'); setDropdownOpen(false);}}>CREATE ACCOUNT</button>
+                    <p className="signed-in-text">Signed in as:<br/><strong>{currentUser.email}</strong></p>
+                    <button className="dropdown-link">Bookings</button>
+                    <button className="dropdown-link">My Account</button>
+                    <button className="dropdown-link" onClick={handleLogout}>Sign Out</button>
                   </>
                 ) : (
                   <>
-                    <button className="dropdown-link" onClick={() => {setCurrentView('book'); setDropdownOpen(false);}}>BOOK APPOINTMENT</button>
-                    <button className="dropdown-link" onClick={handleLogout}>SIGN OUT</button>
+                    <p className="signed-in-text">Welcome</p>
+                    <button className="dropdown-link" onClick={() => window.location.href='/signup'}>Sign In / Register</button>
                   </>
                 )}
-                <button className="dropdown-link">BOOKINGS</button>
-                <button className="dropdown-link">MY ACCOUNT</button>
               </div>
             )}
           </div>
         </div>
       </header>
 
-      {/* HOME PAGE VIEW */}
-      {currentView === 'home' && (
-        <>
-          <section className="hero-section"></section>
+      {/* HERO SECTION */}
+      <section className="hero-section"></section>
+
+      {/* SERVICES BANNER */}
+      <section className="services-banner">
+        <h2>Expert Hair Styling Services</h2>
+        <p>Transform your look with our skilled barbers today!</p>
+        <button className="btn-primary" onClick={scrollToServices}>— BOOK YOUR APPOINTMENT —</button>
+        <div className="banner-logo-circle">FS</div>
+      </section>
+
+      {/* ABOUT SECTION */}
+      <section className="about-section">
+        <h3 className="section-title">ABOUT FADEDSTUDIO</h3>
+        <div className="about-grid">
+          <div className="about-image">
+            <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=800" alt="Barber Tools" />
+          </div>
+          <div className="about-text">
+            <h4>Our Philosophy</h4>
+            <p>At Fadedstudio, we believe that beautiful hair starts with healthy hair. That's why we use only the best products and techniques to ensure that your hair is healthy, strong, and vibrant. We also believe that every client is unique, and we strive to create a personalized experience that meets your individual needs.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ONLINE APPOINTMENTS SECTION (Integrated) */}
+      <section id="services-section" className="booking-section">
+        <h3 className="section-title">ONLINE APPOINTMENTS</h3>
+        
+        {activeView === 'services' ? (
+          <div className="services-grid">
+            {servicesList.map(service => (
+              <div className="service-card" key={service.id}>
+                <img src={service.img} alt={service.name} className="service-img" />
+                <div className="service-info">
+                  <h4>{service.name}</h4>
+                  <p className="service-meta">{service.duration} | {service.price}</p>
+                  <button className="btn-outline-dark" onClick={() => handleBookClick(service)}>SELECT</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="booking-interface fade-in">
+            <div className="booking-left">
+              <button className="dropdown-link" style={{marginBottom: '20px'}} onClick={() => setActiveView('services')}>
+                &larr; Back to services
+              </button>
+              
+              {renderCalendar()}
+
+              <div className="timeslot-container">
+                {isLoadingSlots ? (
+                  <p style={{textAlign: 'center', color: '#888'}}>Loading times...</p>
+                ) : (
+                  <div className="timeslot-split">
+                    <div className="timeslot-column">
+                      <h5>Morning</h5>
+                      <div className="timeslot-grid">
+                        {allTimes.slice(0, 7).map(time => {
+                          const isBooked = bookedSlots.includes(time);
+                          return (
+                            <button 
+                              key={time} disabled={isBooked}
+                              className={`time-btn ${selectedTime === time ? 'selected' : ''} ${isBooked ? 'booked' : ''}`}
+                              onClick={() => setSelectedTime(time)}>
+                              {time}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="timeslot-column">
+                      <h5>Afternoon</h5>
+                      <div className="timeslot-grid">
+                        {allTimes.slice(7).map(time => {
+                          const isBooked = bookedSlots.includes(time);
+                          return (
+                            <button 
+                              key={time} disabled={isBooked}
+                              className={`time-btn ${selectedTime === time ? 'selected' : ''} ${isBooked ? 'booked' : ''}`}
+                              onClick={() => setSelectedTime(time)}>
+                              {time}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="booking-right">
+              <div className="booking-summary-card">
+                <h3>{selectedService.name}</h3>
+                <p className="meta">{selectedService.duration} | {selectedService.price} (Pay later)</p>
+                <img src={selectedService.img} alt={selectedService.name} className="detail-img" />
+                <p className="desc">{selectedService.desc}</p>
+                
+                {bookingSuccess ? (
+                  <div className="success-message">
+                    <h4>Booking Confirmed!</h4>
+                    <p>We'll see you on {selectedDate.toDateString()} at {selectedTime}.</p>
+                    <button className="btn-primary" style={{width: '100%'}} onClick={() => setActiveView('services')}>Book Another</button>
+                  </div>
+                ) : (
+                  <button 
+                    className="btn-primary" 
+                    style={{width: '100%', marginTop: '30px'}}
+                    onClick={handleConfirmBooking}
+                    disabled={!selectedTime || isBooking}
+                  >
+                    {isBooking ? 'Processing...' : 'CONFIRM BOOKING'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* GALLERY SECTION */}
+      <section className="gallery-section">
+        <h3 className="section-title">EXPLORE OUR STUNNING HAIRSTYLE TRANSFORMATIONS</h3>
+        
+        <div className="gallery-main" onClick={() => setCurrentGalleryIndex((p) => (p + 1) % galleryImages.length)}>
+          <img 
+            src={galleryImages[currentGalleryIndex]} 
+            alt="Hairstyle Transformation" 
+            className="gallery-active-img fade-in"
+            key={currentGalleryIndex}
+          />
+          <div className="gallery-overlay-hint">Tap to see next</div>
+        </div>
+
+        <div className="gallery-thumbnails">
+          {galleryImages.map((img, index) => (
+            <img 
+              key={index}
+              src={img} 
+              alt={`Thumbnail ${index + 1}`}
+              className={currentGalleryIndex === index ? 'thumb active' : 'thumb'}
+              onClick={() => setCurrentGalleryIndex(index)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* REVIEWS PARALLAX BANNER */}
+      <section className="reviews-banner">
+        <h2>See what our clients are raving about!</h2>
+        <button className="btn-outline-light">Reviews coming soon!</button>
+      </section>
+
+      {/* CONTACT & MAP SECTION */}
+      <section className="contact-section">
+        <div className="contact-info">
+          <h3 className="section-title left-align">CONTACT US</h3>
           
-          <section className="services-banner">
-            <h1>Expert Hair Styling Services</h1>
-            <p>Transform your look with our skilled barbers today!</p>
-            <div className="banner-logo">FS</div>
-          </section>
-
-          <section className="middle-section" style={{padding: '50px 20px', textAlign: 'center'}}>
-            <p className="section-label" style={{letterSpacing: '2px', color: '#666'}}>ABOUT FADEDSTUDIO</p>
-            <div className="philosophy-box" style={{display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '30px'}}>
-              <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600" alt="Tools" style={{width: '300px', borderRadius: '4px'}}/>
-              <div className="philosophy-text" style={{maxWidth: '400px', textAlign: 'left'}}>
-                <h3 style={{fontWeight: '300'}}>Our Philosophy</h3>
-                <p style={{lineHeight: '1.6', color: '#555'}}>At Fadedstudio, we believe that beautiful hair starts with healthy hair. That's why we use only the best products and techniques to ensure that your hair is healthy, strong, and vibrant.</p>
-              </div>
-            </div>
-
-            <p className="section-label" style={{marginTop: '80px', letterSpacing: '2px', color: '#666'}}>ONLINE APPOINTMENTS</p>
-            <div className="appointment-card" style={{marginTop: '30px', border: '1px solid #eee', padding: '20px', display: 'inline-block'}}>
-              <img src="https://images.unsplash.com/photo-1621605815844-8da76af5b796?w=400" alt="Premium Haircut" style={{width: '200px'}}/>
-              <div className="card-info" style={{marginTop: '15px'}}>
-                <h4>Premium Haircut</h4>
-                <p>1 hr | ₱500</p>
-                <button style={{padding: '10px 20px', background: '#111', color: 'white', border: 'none', cursor: 'pointer'}} onClick={() => setCurrentView(user ? 'book' : 'login')}>BOOK NOW</button>
-              </div>
-            </div>
-          </section>
-
-          <section className="contact-map-section" style={{display: 'flex', padding: '50px', background: '#f9f9f9'}}>
-            <div className="contact-info" style={{flex: 1, paddingRight: '40px', textAlign: 'left'}}>
-              <p className="section-label">CONTACT US</p>
-              <h4>Fadedstudio</h4>
-              <p>East Sabellano Street, Cebu City, Philippines.</p>
-              <p>+639622096953</p>
-            </div>
-            <div className="map-container" style={{flex: 1, height: '300px', background: '#e0e0e0'}}>
-              <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3925.3662057319983!2d123.8828945!3d10.312678!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTDCsDE4JzQ1LjYiTiAxMjPCsDUzJzEwLjQiRQ!5e0!3m2!1sen!2sph!4v1620000000000!5m2!1sen!2sph" width="100%" height="100%" style={{border:0}} allowFullScreen="" loading="lazy"></iframe>
-            </div>
-          </section>
-
-          {/* RESTORED NEWSLETTER SECTION */}
-          <section className="newsletter-section" style={{textAlign: 'center', padding: '60px 20px', background: 'white'}}>
-            <p className="section-label" style={{letterSpacing: '2px', color: '#666'}}>SOCIAL</p>
-            <div className="ig-icon" style={{margin: '20px 0'}}>
-                <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Instagram" width="30"/>
-            </div>
-            <h2 className="cutting-edge-text" style={{fontWeight: '300', fontSize: '2rem'}}>Stay on the cutting-edge</h2>
-            <p className="newsletter-sub" style={{color: '#666', marginBottom: '30px'}}>Sign up to hear from us about specials, sales, events, and fashion tips.</p>
-            <form className="newsletter-form" onSubmit={(e) => e.preventDefault()} style={{display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap'}}>
-              <input type="email" placeholder="Email Address" required style={{padding: '10px', width: '250px', border: '1px solid #ccc'}} />
-              <button type="submit" style={{padding: '10px 20px', background: 'white', color: '#111', border: '1px solid #111', cursor: 'pointer'}}>— SIGN UP —</button>
-            </form>
-          </section>
-        </>
-      )}
-
-      {/* AUTHENTICATION & BOOKING VIEWS */}
-      {currentView === 'register' && (
-        <section className="auth-page" style={{paddingTop: '120px', textAlign: 'center', flex: 1}}>
-          <div className="auth-container" style={{maxWidth: '400px', margin: '0 auto'}}>
-            <h1 style={{fontWeight: '300'}}>CREATE ACCOUNT</h1>
-            <form onSubmit={handleRegister} className="minimal-form" style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
-              <input type="text" placeholder="First name" required onChange={e => setAuthData({...authData, firstName: e.target.value})} style={{padding: '12px'}}/>
-              <input type="text" placeholder="Last name" required onChange={e => setAuthData({...authData, lastName: e.target.value})} style={{padding: '12px'}}/>
-              <input type="email" placeholder="Email" required onChange={e => setAuthData({...authData, email: e.target.value})} style={{padding: '12px'}}/>
-              <input type="password" placeholder="Password" required onChange={e => setAuthData({...authData, password: e.target.value})} style={{padding: '12px'}}/>
-              <button type="submit" style={{padding: '15px', background: '#111', color: 'white', border: 'none'}}>— CREATE ACCOUNT —</button>
-              {msg && <p style={{color: 'red'}}>{msg}</p>}
-            </form>
-            <p style={{marginTop: '20px', cursor: 'pointer', color: '#666'}} onClick={() => setCurrentView('login')}>Already have an account? Sign in</p>
+          <div className="info-block">
+            <h5>Fadedstudio</h5>
+            <p>East Sabellano Street, Cebu City, 6000 Cebu, Philippines</p>
+            <p>+63 9622036953</p>
           </div>
-        </section>
-      )}
 
-      {currentView === 'login' && (
-        <section className="auth-page" style={{paddingTop: '120px', textAlign: 'center', flex: 1}}>
-          <div className="auth-container" style={{maxWidth: '400px', margin: '0 auto'}}>
-            <h1 style={{fontWeight: '300'}}>ACCOUNT SIGN IN</h1>
-            <form onSubmit={handleLogin} className="minimal-form" style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
-              <input type="email" placeholder="Email" required onChange={e => setAuthData({...authData, email: e.target.value})} style={{padding: '12px'}}/>
-              <input type="password" placeholder="Password" required onChange={e => setAuthData({...authData, password: e.target.value})} style={{padding: '12px'}}/>
-              <button type="submit" style={{padding: '15px', background: '#111', color: 'white', border: 'none'}}>— SIGN IN —</button>
-              {msg && <p style={{color: 'red'}}>{msg}</p>}
-            </form>
-            <p style={{marginTop: '20px', cursor: 'pointer', color: '#666'}} onClick={() => setCurrentView('register')}>Not a member? Create account.</p>
+          <div className="info-block">
+            <h5>Hours</h5>
+            <p>Open today 10:00 am - 05:00 pm</p>
           </div>
-        </section>
-      )}
 
-      {currentView === 'book' && (
-        <section className="auth-page" style={{paddingTop: '120px', textAlign: 'center', flex: 1}}>
-          <div className="auth-container" style={{maxWidth: '400px', margin: '0 auto'}}>
-            <h1 style={{fontWeight: '300'}}>RESERVE YOUR CHAIR</h1>
-            <form onSubmit={handleBook} className="minimal-form" style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
-              <select onChange={e => setBooking({...booking, barber: e.target.value})} style={{padding: '12px'}}><option>Master Jay</option><option>Admin Ace</option></select>
-              <select onChange={e => setBooking({...booking, service: e.target.value})} style={{padding: '12px'}}><option>Premium Haircut</option><option>Signature Fade</option></select>
-              <input type="date" required onChange={e => setBooking({...booking, date: e.target.value})} style={{padding: '12px'}}/>
-              <select required onChange={e => setBooking({...booking, time: e.target.value})} style={{padding: '12px'}}><option value="">Select Time</option><option>09:00 AM</option><option>01:00 PM</option></select>
-              <button type="submit" style={{padding: '15px', background: '#111', color: 'white', border: 'none'}}>— CONFIRM BOOKING —</button>
-              {msg && <p style={{color: 'red'}}>{msg}</p>}
-            </form>
-          </div>
-        </section>
-      )}
+          <button className="btn-outline-dark">— GET IN TOUCH —</button>
+        </div>
 
-      {/* RESTORED FOOTER */}
-      <footer className="luxury-footer" style={{background: '#222', color: '#aaa', textAlign: 'center', padding: '20px', fontSize: '0.8rem', letterSpacing: '1px', marginTop: 'auto'}}>
-        <p>COPYRIGHT © 2026 FADEDSTUDIO - ALL RIGHTS RESERVED.</p>
+        <div className="contact-map">
+          {/* Replaced with an actual Google Maps Embed matching Cebu City */}
+          <iframe 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3925.594738722442!2d123.8640700147963!3d10.294199992649035!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33a99c4b78db57ed%3A0xc319114f09cb8b9a!2sE%20Sabellano%20St%2C%20Cebu%20City%2C%20Cebu%2C%20Philippines!5e0!3m2!1sen!2sus!4v1680000000000!5m2!1sen!2sus" 
+            width="100%" 
+            height="100%" 
+            style={{ border: 0, minHeight: '350px', filter: 'grayscale(20%)' }} 
+            allowFullScreen="" 
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          ></iframe>
+        </div>
+      </section>
+
+      {/* NEWSLETTER & FOOTER */}
+      <footer className="site-footer">
+        <div className="social-icon">
+           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+            </svg>
+        </div>
+        
+        <h2>Stay on the cutting-edge</h2>
+        <p className="newsletter-sub">Sign up to hear from us about specials, sales, events, and fashion tips.</p>
+        
+        <div className="newsletter-form">
+          <input type="email" placeholder="Email Address" />
+          <button className="btn-outline-dark">— SIGN UP —</button>
+        </div>
       </footer>
+      
+      <div className="copyright-bar">
+        COPYRIGHT © 2026 FADEDSTUDIO - ALL RIGHTS RESERVED.
+      </div>
     </div>
   );
 }
