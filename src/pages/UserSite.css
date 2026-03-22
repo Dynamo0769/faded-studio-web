@@ -1,0 +1,225 @@
+/* UserSite.css */
+.user-site {
+  position: relative;
+  min-height: 100vh;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Header Styles */
+.site-header {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  padding: 20px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(40, 40, 40, 0.85); /* Dark semi-transparent */
+  color: white;
+  z-index: 100;
+  box-sizing: border-box;
+}
+
+.logo {
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  font-weight: 300;
+}
+
+.header-center {
+  color: #888;
+  cursor: pointer;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  position: relative;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background: #555;
+  color: white;
+  font-size: 0.6rem;
+  border-radius: 50%;
+  padding: 2px 6px;
+}
+
+/* Dropdown Menu */
+.profile-dropdown {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: #333;
+  color: #ccc;
+  width: 250px;
+  padding: 20px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  text-align: left;
+}
+
+.profile-dropdown p {
+  margin: 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+  color: #999;
+}
+
+.dropdown-link {
+  background: none;
+  border: none;
+  color: #ccc;
+  text-align: left;
+  padding: 0;
+  font-size: 0.85rem;
+  cursor: pointer;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.dropdown-link:hover {
+  color: white;
+}
+
+/* Hero Section */
+.hero-section {
+  height: 70vh;
+  /* I put a placeholder Unsplash barber image here so it works immediately */
+  background-image: url('https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=2000');
+  background-size: cover;
+  background-position: center 20%;
+}
+
+/* Services Banner */
+.services-banner {
+  background-color: #d1bba4; /* The Tan color from your screenshot */
+  padding: 60px 20px;
+  text-align: center;
+  color: #222;
+  position: relative;
+}
+
+.services-banner h1 {
+  font-size: 2.5rem;
+  font-weight: 400;
+  margin-bottom: 10px;
+}
+
+.services-banner p {
+  font-size: 1.1rem;
+  color: #444;
+}
+
+.banner-logo {
+  position: absolute;
+  right: 15%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  background: #111;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 0.7rem;
+}
+
+/* Chat Widget */
+.chat-widget {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  z-index: 1000;
+}
+
+.chat-popup {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  width: 250px;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.chat-popup h4 {
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.chat-popup p {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 15px;
+}
+
+.chat-btn {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.chat-btn.dark {
+  background: #111;
+  color: white;
+}
+
+.chat-bubble-btn {
+  width: 60px;
+  height: 60px;
+  background: #111;
+  border-radius: 50%;
+  color: white;
+  font-size: 1.5rem;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.chat-notification {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: red;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  font-size: 0.6rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

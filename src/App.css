@@ -1,0 +1,115 @@
+/* GLOBAL SETTINGS */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Helvetica Neue', Arial, sans-serif; }
+body { background-color: #fff; color: #333; overflow-x: hidden; width: 100%; }
+#root { width: 100%; }
+
+/* ========================================= */
+/* ========= CLIENT SITE (LUXURY THEME) ==== */
+/* ========================================= */
+.luxury-site { width: 100%; background: #fff; }
+
+/* HEADER */
+.luxury-header { display: flex; justify-content: space-between; align-items: center; background-color: #000; padding: 25px 50px; color: #fff; position: relative; z-index: 1000; border-bottom: 1px solid #222; }
+.brand { font-size: 24px; font-weight: 800; letter-spacing: 4px; color: #fff; cursor: pointer; }
+.nav-icons-container { display: flex; gap: 20px; align-items: center; }
+.icon { font-size: 1.2rem; color: #fff; cursor: pointer; margin-left: 20px; }
+.cart-badge { font-size: 0.6rem; background: #666; color: #fff; padding: 2px 6px; border-radius: 50%; vertical-align: top; margin-left: -5px; }
+
+/* DROPDOWN */
+.user-menu-wrapper { position: relative; }
+.dropdown-menu { position: absolute; top: 35px; right: 0; background-color: #111; border: 1px solid #333; width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: flex; flex-direction: column; padding: 10px 0; }
+.dropdown-item { padding: 12px 20px; color: #aaa; font-size: 0.7rem; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
+.dropdown-item:hover { color: #fff; background-color: #222; }
+
+/* HERO & TAN BANNER */
+.hero-full { width: 100%; height: 90vh; overflow: hidden; position: relative; background: #000; }
+.hero-full img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
+.tan-banner { background-color: #c9af96; padding: 60px 20px; text-align: center; color: #333; }
+.tan-banner h2 { font-weight: 400; font-size: 2rem; margin-bottom: 10px; }
+.tan-banner p { font-size: 0.9rem; color: #555; margin-bottom: 30px; }
+
+/* MIDDLE SECTION */
+.middle-section { padding: 100px 10%; text-align: center; background: #fff; border-top: 1px solid #eee; }
+.section-label { font-size: 0.8rem; letter-spacing: 2px; color: #888; text-transform: uppercase; margin-bottom: 40px; }
+
+.philosophy-box { display: flex; align-items: center; justify-content: center; gap: 60px; max-width: 1200px; margin: 0 auto; text-align: left; }
+.philosophy-box img { width: 100%; max-width: 450px; height: auto; object-fit: cover; border: 1px solid #eee; padding: 15px; }
+.philosophy-text { flex: 1; }
+.philosophy-text h3 { font-size: 1.8rem; margin-bottom: 25px; color: #333; font-weight: 500; }
+.philosophy-text p { font-size: 1.1rem; line-height: 1.8; color: #666; }
+
+/* APPOINTMENT CARD */
+.appointment-card { display: flex; max-width: 800px; margin: 0 auto; border: 1px solid #eee; text-align: left; background: #fff; overflow: hidden; }
+.appointment-card img { width: 300px; object-fit: cover; }
+.card-info { padding: 40px; display: flex; flex-direction: column; justify-content: center; width: 100%; }
+.card-info h4 { font-size: 1.8rem; margin-bottom: 10px; color: #333; font-weight: 500; }
+.card-info p { font-size: 1.1rem; color: #888; margin-bottom: 25px; }
+.black-book-btn { background: #000; color: #fff; border: none; padding: 15px 35px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; align-self: flex-start; }
+.black-book-btn:hover { background: #333; }
+
+.transformation-image { max-width: 1200px; margin: 0 auto; }
+.transformation-image img { width: 100%; height: auto; object-fit: cover; }
+
+/* REVIEWS, CONTACT, MAP */
+.reviews-banner { background: #111; padding: 120px 20px; text-align: center; color: #fff; border-top: 1px solid #222; border-bottom: 1px solid #222; }
+.reviews-banner h2 { font-weight: 300; font-size: 2.5rem; margin-bottom: 20px; }
+.reviews-pill { font-style: italic; color: #888; font-size: 1.1rem; letter-spacing: 1px; }
+
+.contact-map-section { display: flex; gap: 60px; max-width: 1200px; margin: 0 auto; padding: 100px 10%; background: #fff; }
+.contact-info { flex: 1; text-align: left; }
+.contact-info h4 { font-size: 1.2rem; font-weight: 500; margin-top: 35px; margin-bottom: 10px; color: #333; }
+.contact-info p { font-size: 1.05rem; color: #666; line-height: 1.6; margin-bottom: 5px; }
+.map-container { flex: 1; min-height: 400px; background: #eee; border: 1px solid #ddd; padding: 15px; }
+
+/* NEWSLETTER & FOOTER */
+.newsletter-section { text-align: center; padding: 80px 20px 40px; background: #fff; }
+.ig-icon img { margin: 20px 0 30px; cursor: pointer; width: 30px; }
+.cutting-edge-text { color: #333; font-weight: 300; font-size: 2.2rem; margin-bottom: 15px; }
+.newsletter-sub { font-size: 0.9rem; color: #888; margin-bottom: 40px; letter-spacing: 2px; }
+.newsletter-form { display: flex; justify-content: center; gap: 15px; }
+.newsletter-form input { padding: 15px 20px; border: 1px solid #ccc; width: 350px; outline: none; font-size: 1rem; }
+.inline-btn { margin: 0; padding: 15px 35px; }
+
+.luxury-footer { background-color: #000; padding: 40px 20px; text-align: center; position: relative; border-top: 1px solid #222; }
+.luxury-footer p { color: #555; font-size: 0.85rem; letter-spacing: 1px; }
+
+/* AUTHENTICATION PAGES (LOGIN/REGISTER/BOOK) */
+.auth-page { display: flex; justify-content: center; padding: 100px 20px; min-height: 70vh; background: #fff; }
+.auth-container { max-width: 500px; width: 100%; text-align: center; }
+.auth-container h1 { font-weight: 300; font-size: 2rem; letter-spacing: 2px; margin-bottom: 20px; color: #333; }
+.subtitle { font-size: 0.9rem; color: #888; margin-bottom: 40px; line-height: 1.6; }
+.minimal-form { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+.minimal-form input, .minimal-form select { padding: 15px; border: 1px solid #ddd; font-size: 1rem; background: transparent; color: #333; outline: none; }
+.minimal-form input:focus, .minimal-form select:focus { border-color: #888; }
+.outline-btn { background: transparent; border: 2px solid #333; color: #333; padding: 15px 35px; font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: 0.3s; font-weight: bold; }
+.outline-btn:hover { background: #333; color: #fff; }
+.black-btn { width: 100%; margin: 10px auto 0; background: #000; color: #fff; border: none; }
+.black-btn:hover { background: #333; }
+.auth-link { font-size: 0.9rem; color: #888; cursor: pointer; transition: 0.2s; }
+.auth-link:hover { color: #333; }
+.error-msg { color: #d9534f; font-size: 0.9rem; margin-top: 10px; }
+
+/* ========================================= */
+/* ========= ADMIN SITE (DO NOT REMOVE) ==== */
+/* ========================================= */
+.admin-body { background: #080808; min-height: 100vh; width: 100%; color: #eee; font-size: 0.9rem; font-family: 'Segoe UI', sans-serif; }
+.admin-nav { display: flex; justify-content: space-between; padding: 15px 30px; background: #111; align-items: center; border-bottom: 1px solid #333; }
+.admin-nav .nav-brand { color: white; letter-spacing: 3px; font-weight: bold; }
+.admin-nav .nav-brand span { color: #C9B497; }
+.admin-info { color: #aaa; font-size: 0.85rem; letter-spacing: 1px; display: flex; align-items: center; }
+.pulse-dot { height: 8px; width: 8px; background-color: #28b4a4; border-radius: 50%; display: inline-block; margin-right: 8px; box-shadow: 0 0 8px #28b4a4; }
+.admin-content { padding: 40px 30px; }
+.header-flex { margin-bottom: 30px; border-bottom: 1px solid #222; padding-bottom: 15px; }
+.header-flex h1 { font-size: 1.5rem; color: #fff; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 5px; }
+.header-flex p { color: #888; font-size: 0.9rem; }
+.integration-table { width: 100%; border-collapse: collapse; background: #111; border: 1px solid #222; margin-top: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+.integration-table th, .integration-table td { padding: 16px; border-bottom: 1px solid #222; text-align: left; }
+.integration-table th { background: #1a1a1a; color: #C9B497; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1.5px; }
+.integration-table tr:hover { background: #151515; }
+.btn-accept { background: #28b4a4; color: white; border: none; padding: 8px 14px; cursor: pointer; border-radius: 3px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
+.btn-accept:hover { background: #209688; }
+/* ADMIN VIEW TABS */
+.admin-tabs { display: flex; gap: 15px; }
+.tab-btn { background: transparent; border: 1px solid #333; color: #888; padding: 8px 16px; font-size: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: 0.2s; border-radius: 4px; font-weight: bold; }
+.tab-btn:hover { border-color: #555; color: #ccc; }
+.tab-btn.active { background: #1a1a1a; border-color: #C9B497; color: #C9B497; box-shadow: 0 0 10px rgba(201, 180, 151, 0.1); }

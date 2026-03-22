@@ -1,0 +1,159 @@
+/* Container holding both panels */
+.admin-services-container {
+  display: flex;
+  background-color: #121826; /* Dark navy background */
+  min-height: 100vh;
+  color: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* --- LEFT PANEL --- */
+.services-list-panel {
+  flex: 1;
+  max-width: 450px;
+  background-color: #1a202c;
+  padding: 30px 20px;
+  border-right: 1px solid #2d3748;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header h2 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  font-weight: 500;
+  color: #888;
+}
+
+.btn-gold-full {
+  width: 100%;
+  background-color: #eab308; /* Gold/Yellow */
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 25px;
+  transition: 0.2s;
+}
+.btn-gold-full:hover { background-color: #ca8a04; }
+
+.services-scroll {
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 10px;
+}
+
+/* Service Cards */
+.service-admin-card {
+  background-color: #2d3748;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.service-admin-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+.card-content {
+  padding: 15px;
+}
+.service-detail-text {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+  margin-bottom: 15px;
+}
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.price-tag {
+  background-color: #eab308;
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+.btn-edit-remove {
+  background-color: #fff;
+  color: #000;
+  border: none;
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+/* --- RIGHT PANEL --- */
+.service-edit-panel {
+  flex: 1;
+  background-color: #121826;
+  padding: 40px;
+}
+.edit-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  color: #888;
+}
+.back-arrow {
+  font-size: 1.5rem;
+  margin-right: 15px;
+  cursor: pointer;
+}
+
+.edit-form {
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+}
+.edit-form label {
+  color: #cbd5e1;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+.edit-form input, .edit-form textarea {
+  background-color: #1e293b;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 15px;
+  color: #fff;
+  margin-bottom: 20px;
+  font-size: 1rem;
+  outline: none;
+}
+.edit-form input:focus, .edit-form textarea:focus {
+  border: 1px solid #eab308;
+}
+
+.image-preview {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+}
+.btn-danger {
+  flex: 1;
+  background-color: transparent;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.btn-danger:hover { background-color: #ef4444; color: #fff; }

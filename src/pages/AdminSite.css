@@ -1,0 +1,54 @@
+/* src/pages/AdminSite.css */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #121826;
+  color: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.admin-nav {
+  width: 250px;
+  background-color: #0f141e;
+  padding: 30px 0;
+  border-right: 1px solid #2d3748;
+}
+
+.admin-logo {
+  text-align: center;
+  color: #eab308;
+  margin-bottom: 40px;
+  letter-spacing: 2px;
+}
+
+.nav-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-links li {
+  padding: 15px 30px;
+  cursor: pointer;
+  color: #888;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.nav-links li:hover {
+  background-color: #1a202c;
+  color: #fff;
+}
+
+.nav-links li.active {
+  background-color: #1a202c;
+  color: #eab308;
+  border-left: 4px solid #eab308;
+}
+
+.admin-content {
+  flex: 1;
+  /* This ensures the AdminServices component fills the rest of the screen */
+  display: flex; 
+  flex-direction: column;
+}
