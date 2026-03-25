@@ -217,7 +217,7 @@ function UserSite() {
   };
 
   const handleNavClick = (view) => {
-    setCurrentPage('home'); // Ensure we are on home page to show the main content area
+    setCurrentPage('home');
     setActiveView(view);
     setDropdownOpen(false);
     if (view === 'bookingsList') {
@@ -232,7 +232,7 @@ function UserSite() {
     if(currentPage !== 'home') setCurrentPage('home');
     setActiveView('services');
     setTimeout(() => {
-      document.getElementById('services-section')?.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('main-content-area')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
 
@@ -294,13 +294,11 @@ function UserSite() {
 
   // --- VIEW RENDERING FUNCTIONS ---
 
-  // 1. HEADER (Dynamic Class fixes the white space issue)
   const renderHeader = () => (
     <header className={`site-header ${currentPage === 'home' ? 'header-transparent' : 'header-solid'}`}>
         <div className="logo" style={{cursor: 'pointer'}} onClick={() => setCurrentPage('home')}>FADEDSTUDIO</div>
         
         <div className="header-actions">
-          {/* My Bookings Text Button replaces the Cart Icon */}
           {currentUser && (
             <button className="icon-btn my-bookings-nav-btn" onClick={() => handleNavClick('bookingsList')}>
               MY BOOKINGS
@@ -340,7 +338,6 @@ function UserSite() {
     </header>
   );
 
-  // 2. MAIN LANDING PAGE VIEW
   const renderMainPage = () => (
     <>
       <section className="hero-section hero-home">
@@ -351,11 +348,11 @@ function UserSite() {
         </div>
       </section>
 
+      {/* Notice: FS logo completely removed below! */}
       <section className="services-banner">
         <h2>Expert Hair Styling Services</h2>
         <p>Transform your look with our skilled barbers today!</p>
         <button className="btn-primary" onClick={scrollToServices}>— VIEW SERVICES —</button>
-        <div className="banner-logo-circle">FS</div>
       </section>
 
       <section className="about-section">
@@ -371,10 +368,8 @@ function UserSite() {
         </div>
       </section>
 
-      {/* DYNAMIC CONTENT AREA */}
       <section id="main-content-area" className="booking-section">
         
-        {/* VIEW: SERVICES */}
         {activeView === 'services' && (
           <>
             <h3 className="section-title">ONLINE APPOINTMENTS</h3>
@@ -399,7 +394,6 @@ function UserSite() {
           </>
         )}
 
-        {/* VIEW: BOOKING INTERFACE */}
         {activeView === 'booking' && (
           <>
             <h3 className="section-title">CHOOSE A TIME</h3>
@@ -482,7 +476,6 @@ function UserSite() {
           </>
         )}
 
-        {/* VIEW: MY BOOKINGS LIST */}
         {activeView === 'bookingsList' && (
           <div className="user-dashboard fade-in">
              <h3 className="section-title">MY BOOKINGS</h3>
@@ -521,7 +514,6 @@ function UserSite() {
           </div>
         )}
 
-        {/* VIEW: MY ACCOUNT */}
         {activeView === 'account' && (
           <div className="user-dashboard fade-in">
              <h3 className="section-title">MY ACCOUNT</h3>
@@ -587,7 +579,7 @@ function UserSite() {
         </div>
         <div className="contact-map">
           <iframe 
-            src="https://maps.google.com/maps?q=East%20Sabellano%20Street,%20Cebu%20City&t=&z=15&ie=UTF8&iwloc=&output=embed"
+            src="https://googleusercontent.com/maps.google.com/3"
             width="100%" height="100%" style={{ border: 0, minHeight: '350px', filter: 'grayscale(30%) contrast(1.2)' }} 
             allowFullScreen="" loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="Location"
           ></iframe>
@@ -596,7 +588,6 @@ function UserSite() {
     </>
   );
 
-  // 3. CREATE ACCOUNT PAGE
   const renderCreateAccountPage = () => (
     <div className="auth-page-container container-center fade-in">
         <h2 className="auth-title">CREATE ACCOUNT</h2>
@@ -635,7 +626,6 @@ function UserSite() {
     </div>
   );
 
-  // 4. SIGN IN PAGE
   const renderSignInPage = () => (
     <div className="auth-page-container container-center fade-in">
         <h2 className="auth-title">SIGN IN</h2>
@@ -679,7 +669,6 @@ function UserSite() {
       {currentPage === 'createAccount' && renderCreateAccountPage()}
       {currentPage === 'signIn' && renderSignInPage()}
 
-      {/* FOOTER - Shared across all views */}
       <footer className="site-footer">
         <div className="social-icon">
            <a href="https://www.instagram.com/faded_studiocebu/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', display: 'flex' }}>

@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import UserSite from './pages/UserSite';
 import AdminSite from './pages/AdminSite';
-// We fixed this line right here! It now looks in the same folder instead of /pages
 import SignUp from './SignUp'; 
 import './App.css';
 
