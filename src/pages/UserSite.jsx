@@ -10,6 +10,10 @@ function UserSite() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
 
+  // --- DYNAMIC DATA STATE ---
+  const [servicesList, setServicesList] = useState([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(true);
+
   // --- BOOKING STATE ---
   const [activeView, setActiveView] = useState('services'); // 'services' or 'booking'
   const [selectedService, setSelectedService] = useState(null);
@@ -22,17 +26,10 @@ function UserSite() {
 
   // High-quality placeholder images for the gallery
   const galleryImages = [
-    "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=1200",
-    "https://images.unsplash.com/photo-1593702284287-418d182fd9ff?auto=format&fit=crop&q=80&w=1200",
-    "https://images.unsplash.com/photo-1598908314732-07113901949b?auto=format&fit=crop&q=80&w=1200",
-    "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=1200"
-  ];
-
-  const servicesList = [
-    { id: 1, name: 'Premium Haircut', duration: '1 hr', price: '₱500', img: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=800', desc: 'Experience a top-tier haircut by our expert stylists for a fresh, stylish look.' },
-    { id: 2, name: 'Signature Fade', duration: '1 hr', price: '₱400', img: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=800', desc: 'Precision fading tailored to your head shape for a sharp, clean finish.' },
-    { id: 3, name: 'Buzz Cut', duration: '45 min', price: '₱350', img: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80&w=800', desc: 'A clean, uniform buzz cut completed with crisp line-ups.' },
-    { id: 4, name: 'Beard Trim & Sculpt', duration: '30 min', price: '₱250', img: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=800', desc: 'Detailed beard grooming, shaping, and a relaxing hot towel finish.' }
+    'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=1200',
+    'https://images.unsplash.com/photo-1593702284287-418d182fd9ff?auto=format&fit=crop&q=80&w=1200',
+    'https://images.unsplash.com/photo-1598908314732-07113901949b?auto=format&fit=crop&q=80&w=1200',
+    'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=1200'
   ];
 
   const allTimes = [
@@ -41,17 +38,47 @@ function UserSite() {
     '3:00 PM', '3:30 PM', '4:00 PM'
   ];
 
+  // --- FIREBASE FETCH: SERVICES ---
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "Services"));
+        const fetchedServices = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        // Fallback to placeholder data if Firestore is empty during dev
+        if (fetchedServices.length === 0) {
+           setServicesList([
+             { id: 1, name: 'Signature Fade', duration: '45 Min', price: '450', imageUrl: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=500&q=60' },
+             { id: 2, name: 'Classic Cut & Beard', duration: '60 Min', price: '600', imageUrl: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=500&q=60' }
+           ]);
+        } else {
+           setServicesList(fetchedServices);
+        }
+      } catch (error) {
+        console.error("Error fetching services: ", error);
+      } finally {
+        setIsLoadingServices(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
   // Firebase Auth Listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => setCurrentUser(user));
     return () => unsubscribe();
   }, []);
 
-  // Gallery Auto-Slide Effect
+  // --- AUTOMATIC SLIDESHOW EFFECT ---
+  const autoSlideInterval = 5000; // slightly slower for better UX
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentGalleryIndex((prevIndex) => (prevIndex + 1) % galleryImages.length);
-    }, 4000);
+    }, autoSlideInterval);
     return () => clearInterval(timer);
   }, [galleryImages.length]);
 
@@ -66,8 +93,11 @@ function UserSite() {
     setIsLoadingSlots(true);
     setSelectedTime(null);
     try {
-      const dateString = dateObj.toISOString().split('T')[0];
-      const q = query(collection(db, 'Appointments'), where('date', '==', dateString));
+      // Adjusting for local timezone string format
+      const offset = dateObj.getTimezoneOffset() * 60000;
+      const localISOTime = (new Date(dateObj - offset)).toISOString().split('T')[0];
+      
+      const q = query(collection(db, 'Appointments'), where('date', '==', localISOTime));
       const querySnapshot = await getDocs(q);
       
       const booked = [];
@@ -94,11 +124,13 @@ function UserSite() {
 
     setIsBooking(true);
     try {
-      const dateString = selectedDate.toISOString().split('T')[0];
+      const offset = selectedDate.getTimezoneOffset() * 60000;
+      const localISOTime = (new Date(selectedDate - offset)).toISOString().split('T')[0];
+      
       await addDoc(collection(db, 'Appointments'), {
         service: selectedService.name,
         price: selectedService.price,
-        date: dateString,
+        date: localISOTime,
         time: selectedTime,
         userId: currentUser.uid,
         userEmail: currentUser.email,
@@ -165,9 +197,13 @@ function UserSite() {
     return (
       <div className="calendar-widget">
         <div className="cal-month-title">
-          <button onClick={() => setSelectedDate(new Date(currentYear, currentMonth - 1, 1))}>&lt;</button>
+          <button aria-label="Previous Month" onClick={() => setSelectedDate(new Date(currentYear, currentMonth - 1, 1))}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
           <span>{monthName} {currentYear}</span>
-          <button onClick={() => setSelectedDate(new Date(currentYear, currentMonth + 1, 1))}>&gt;</button>
+          <button aria-label="Next Month" onClick={() => setSelectedDate(new Date(currentYear, currentMonth + 1, 1))}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
         </div>
         <div className="cal-grid">
           {headers}
@@ -184,7 +220,7 @@ function UserSite() {
         <div className="logo">FADEDSTUDIO</div>
         
         <div className="header-actions">
-          <button className="icon-btn">
+          <button className="icon-btn" aria-label="Cart">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <circle cx="9" cy="21" r="1"></circle>
               <circle cx="20" cy="21" r="1"></circle>
@@ -194,7 +230,7 @@ function UserSite() {
           </button>
           
           <div style={{ position: 'relative' }}>
-            <button className="icon-btn" onClick={() => setDropdownOpen(!dropdownOpen)}>
+            <button className="icon-btn" onClick={() => setDropdownOpen(!dropdownOpen)} aria-label="Profile Menu">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
@@ -202,7 +238,7 @@ function UserSite() {
             </button>
             
             {dropdownOpen && (
-              <div className="profile-dropdown">
+              <div className="profile-dropdown fade-in">
                 {currentUser ? (
                   <>
                     <p className="signed-in-text">Signed in as:<br/><strong>{currentUser.email}</strong></p>
@@ -222,14 +258,20 @@ function UserSite() {
         </div>
       </header>
 
-      {/* HERO SECTION */}
-      <section className="hero-section"></section>
+      {/* HERO SECTION (Twist: Added real content here) */}
+      <section className="hero-section">
+        <div className="hero-overlay">
+          <h1>ELEVATE YOUR STYLE</h1>
+          <p>Premium grooming and styling in the heart of Cebu City.</p>
+          <button className="btn-outline-light" onClick={scrollToServices}>BOOK AN APPOINTMENT</button>
+        </div>
+      </section>
 
       {/* SERVICES BANNER */}
       <section className="services-banner">
         <h2>Expert Hair Styling Services</h2>
         <p>Transform your look with our skilled barbers today!</p>
-        <button className="btn-primary" onClick={scrollToServices}>— BOOK YOUR APPOINTMENT —</button>
+        <button className="btn-primary" onClick={scrollToServices}>— VIEW SERVICES —</button>
         <div className="banner-logo-circle">FS</div>
       </section>
 
@@ -247,35 +289,41 @@ function UserSite() {
         </div>
       </section>
 
-      {/* ONLINE APPOINTMENTS SECTION (Integrated) */}
+      {/* ONLINE APPOINTMENTS SECTION */}
       <section id="services-section" className="booking-section">
         <h3 className="section-title">ONLINE APPOINTMENTS</h3>
         
         {activeView === 'services' ? (
-          <div className="services-grid">
-            {servicesList.map(service => (
-              <div className="service-card" key={service.id}>
-                <img src={service.img} alt={service.name} className="service-img" />
-                <div className="service-info">
-                  <h4>{service.name}</h4>
-                  <p className="service-meta">{service.duration} | {service.price}</p>
-                  <button className="btn-outline-dark" onClick={() => handleBookClick(service)}>SELECT</button>
+          isLoadingServices ? (
+            <p style={{ textAlign: 'center', margin: '50px 0', color: '#888' }}>Loading Premium Services...</p>
+          ) : servicesList.length === 0 ? (
+            <p style={{ textAlign: 'center', margin: '50px 0', color: '#888' }}>No services available at this time.</p>
+          ) : (
+            <div className="services-grid fade-in">
+              {servicesList.map(service => (
+                <div className="service-card" key={service.id}>
+                  <img src={service.imageUrl || "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80"} alt={service.name} className="service-img" />
+                  <div className="service-info">
+                    <h4>{service.name}</h4>
+                    <p className="service-meta">{service.duration} | ₱{service.price}</p>
+                    <button className="btn-outline-dark" onClick={() => handleBookClick(service)}>SELECT</button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )
         ) : (
           <div className="booking-interface fade-in">
             <div className="booking-left">
-              <button className="dropdown-link" style={{marginBottom: '20px'}} onClick={() => setActiveView('services')}>
-                &larr; Back to services
+              <button className="dropdown-link back-btn" onClick={() => setActiveView('services')}>
+                ← Back to services
               </button>
               
               {renderCalendar()}
 
               <div className="timeslot-container">
                 {isLoadingSlots ? (
-                  <p style={{textAlign: 'center', color: '#888'}}>Loading times...</p>
+                  <p style={{textAlign: 'center', color: '#888'}}>Checking availability...</p>
                 ) : (
                   <div className="timeslot-split">
                     <div className="timeslot-column">
@@ -318,12 +366,12 @@ function UserSite() {
             <div className="booking-right">
               <div className="booking-summary-card">
                 <h3>{selectedService.name}</h3>
-                <p className="meta">{selectedService.duration} | {selectedService.price} (Pay later)</p>
-                <img src={selectedService.img} alt={selectedService.name} className="detail-img" />
-                <p className="desc">{selectedService.desc}</p>
+                <p className="meta">{selectedService.duration} | ₱{selectedService.price} (Pay at shop)</p>
+                <img src={selectedService.imageUrl || "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80"} alt={selectedService.name} className="detail-img" />
+                <p className="desc">{selectedService.detail || "Experience a top-tier cut by our expert styling team."}</p>
                 
                 {bookingSuccess ? (
-                  <div className="success-message">
+                  <div className="success-message fade-in">
                     <h4>Booking Confirmed!</h4>
                     <p>We'll see you on {selectedDate.toDateString()} at {selectedTime}.</p>
                     <button className="btn-primary" style={{width: '100%'}} onClick={() => setActiveView('services')}>Book Another</button>
@@ -348,33 +396,57 @@ function UserSite() {
       <section className="gallery-section">
         <h3 className="section-title">EXPLORE OUR STUNNING HAIRSTYLE TRANSFORMATIONS</h3>
         
-        <div className="gallery-main" onClick={() => setCurrentGalleryIndex((p) => (p + 1) % galleryImages.length)}>
-          <img 
-            src={galleryImages[currentGalleryIndex]} 
-            alt="Hairstyle Transformation" 
-            className="gallery-active-img fade-in"
-            key={currentGalleryIndex}
-          />
-          <div className="gallery-overlay-hint">Tap to see next</div>
-        </div>
+        <div className="gallery-container">
+          <div className="gallery-main">
+            {/* Previous Arrow Button */}
+            <button 
+              className="gallery-nav gallery-prev" 
+              onClick={() => setCurrentGalleryIndex((prevIndex) => (prevIndex - 1 + galleryImages.length) % galleryImages.length)}
+              aria-label="Previous Image"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
 
-        <div className="gallery-thumbnails">
-          {galleryImages.map((img, index) => (
+            {/* Main Image */}
             <img 
-              key={index}
-              src={img} 
-              alt={`Thumbnail ${index + 1}`}
-              className={currentGalleryIndex === index ? 'thumb active' : 'thumb'}
-              onClick={() => setCurrentGalleryIndex(index)}
+              src={galleryImages[currentGalleryIndex]} 
+              alt="Hairstyle Transformation" 
+              className="gallery-active-img fade-in"
+              key={currentGalleryIndex}
             />
-          ))}
+
+            {/* Next Arrow Button */}
+            <button 
+              className="gallery-nav gallery-next" 
+              onClick={() => setCurrentGalleryIndex((prevIndex) => (prevIndex + 1) % galleryImages.length)}
+              aria-label="Next Image"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          {/* Dot Pagination Controls */}
+          <div className="gallery-dots">
+            {galleryImages.map((_, index) => (
+              <button 
+                key={index}
+                className={`gallery-dot ${currentGalleryIndex === index ? 'active' : ''}`}
+                onClick={() => setCurrentGalleryIndex(index)}
+                aria-label={`Go to slide ${index + 1}`}
+              ></button>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* REVIEWS PARALLAX BANNER */}
       <section className="reviews-banner">
         <h2>See what our clients are raving about!</h2>
-        <button className="btn-outline-light">Reviews coming soon!</button>
+        <button className="btn-outline-light">Reviews coming soon</button>
       </section>
 
       {/* CONTACT & MAP SECTION */}
@@ -384,28 +456,31 @@ function UserSite() {
           
           <div className="info-block">
             <h5>Fadedstudio</h5>
-            <p>East Sabellano Street, Cebu City, 6000 Cebu, Philippines</p>
-            <p>+63 9622036953</p>
+            <p>East Sabellano Street, Cebu City</p>
+            <p>6000 Cebu, Philippines</p>
+            <p>+63 962 203 6953</p>
           </div>
 
           <div className="info-block">
             <h5>Hours</h5>
-            <p>Open today 10:00 am - 05:00 pm</p>
+            <p>Open Today: 10:00 AM - 05:00 PM</p>
+            <p>Sunday: Closed</p>
           </div>
 
           <button className="btn-outline-dark">— GET IN TOUCH —</button>
         </div>
 
         <div className="contact-map">
-          {/* Replaced with an actual Google Maps Embed matching Cebu City */}
+          {/* Working Google Map Embed for Cebu City */}
           <iframe 
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3925.594738722442!2d123.8640700147963!3d10.294199992649035!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33a99c4b78db57ed%3A0xc319114f09cb8b9a!2sE%20Sabellano%20St%2C%20Cebu%20City%2C%20Cebu%2C%20Philippines!5e0!3m2!1sen!2sus!4v1680000000000!5m2!1sen!2sus" 
+            src="https://maps.google.com/maps?q=East%20Sabellano%20Street,%20Cebu%20City&t=&z=15&ie=UTF8&iwloc=&output=embed"
             width="100%" 
             height="100%" 
-            style={{ border: 0, minHeight: '350px', filter: 'grayscale(20%)' }} 
+            style={{ border: 0, minHeight: '350px', filter: 'grayscale(30%) contrast(1.2)' }} 
             allowFullScreen="" 
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
+            title="Fadedstudio Location"
           ></iframe>
         </div>
       </section>
@@ -421,7 +496,7 @@ function UserSite() {
         </div>
         
         <h2>Stay on the cutting-edge</h2>
-        <p className="newsletter-sub">Sign up to hear from us about specials, sales, events, and fashion tips.</p>
+        <p className="newsletter-sub">Sign up to hear from us about specials, styling tips, and events.</p>
         
         <div className="newsletter-form">
           <input type="email" placeholder="Email Address" />
