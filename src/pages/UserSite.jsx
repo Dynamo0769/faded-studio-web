@@ -3,6 +3,9 @@ import { auth, db } from '../firebase';
 import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import './UserSite.css';
+import Booking from './Booking';
+
+const BARBERS = ['Marcus', 'Julian', 'Desmond', 'Leo'];
 
 function UserSite() {
   // --- UI STATE ---
@@ -28,6 +31,7 @@ function UserSite() {
   const [selectedService, setSelectedService] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState(null);
+  const [selectedBarber, setSelectedBarber] = useState(null);
   const [bookedSlots, setBookedSlots] = useState([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
@@ -59,8 +63,8 @@ function UserSite() {
         }));
         if (fetchedServices.length === 0) {
            setServicesList([
-             { id: 1, name: 'Signature Fade', duration: '45 Min', price: '450', imageUrl: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=500&q=60' },
-             { id: 2, name: 'Classic Cut & Beard', duration: '60 Min', price: '600', imageUrl: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=500&q=60' }
+             { id: 1, serviceName: 'Signature Fade', duration: '45 Min', price: '450', imageUrl: 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=500&q=60' },
+             { id: 2, serviceName: 'Classic Cut & Beard', duration: '60 Min', price: '600', imageUrl: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=500&q=60' }
            ]);
         } else {
            setServicesList(fetchedServices);
@@ -168,6 +172,7 @@ function UserSite() {
     setActiveView('booking');
     setBookingSuccess(false);
     setBookingRefCode('');
+    setSelectedBarber(null);
   };
 
   const handleConfirmBooking = async () => {
@@ -175,29 +180,37 @@ function UserSite() {
       alert("Please sign in to book an appointment.");
       return setCurrentPage('signIn');
     }
+    if (!selectedBarber) return alert("Please select a barber.");
     if (!selectedTime) return alert("Please select a time slot.");
 
     setIsBooking(true);
     try {
       const offset = selectedDate.getTimezoneOffset() * 60000;
       const localISOTime = (new Date(selectedDate - offset)).toISOString().split('T')[0];
-      const docRef = await addDoc(collection(db, 'Appointments'), {
-        service: selectedService.name,
+      
+      // Creating a random Ref Code to save to Firestore
+      const generatedCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      await addDoc(collection(db, 'Appointments'), {
+        // FIXED THIS LINE: Using serviceName instead of name to match your database
+        service: selectedService.serviceName || selectedService.name || 'Haircut',
         price: selectedService.price,
         date: localISOTime,
         time: selectedTime,
+        barber: selectedBarber,
+        refCode: generatedCode,
         userId: currentUser.uid,
         userEmail: currentUser.email,
         status: 'Confirmed',
         createdAt: serverTimestamp()
       });
-      const generatedCode = docRef.id.substring(0, 6).toUpperCase();
+      
       setBookingRefCode(generatedCode);
       setBookingSuccess(true);
       fetchAvailableTimes(selectedDate);
     } catch (error) {
       console.error("Booking error:", error);
-      alert("Failed to book appointment.");
+      alert("Failed to save booking. Please check your Firestore Security Rules.");
     }
     setIsBooking(false);
   };
@@ -348,7 +361,6 @@ function UserSite() {
         </div>
       </section>
 
-      {/* Notice: FS logo completely removed below! */}
       <section className="services-banner">
         <h2>Expert Hair Styling Services</h2>
         <p>Transform your look with our skilled barbers today!</p>
@@ -381,9 +393,11 @@ function UserSite() {
               <div className="services-grid fade-in">
                 {servicesList.map(service => (
                   <div className="service-card" key={service.id}>
-                    <img src={service.imageUrl || "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80"} alt={service.name} className="service-img" />
+                    {/* FIXED: serviceName here */}
+                    <img src={service.imageUrl || "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80"} alt={service.serviceName || service.name} className="service-img" />
                     <div className="service-info">
-                      <h4>{service.name}</h4>
+                      {/* FIXED: serviceName here */}
+                      <h4>{service.serviceName || service.name}</h4>
                       <p className="service-meta">{service.duration} | ₱{service.price}</p>
                       <button className="btn-outline-dark" onClick={() => handleBookClick(service)}>SELECT</button>
                     </div>
@@ -396,11 +410,28 @@ function UserSite() {
 
         {activeView === 'booking' && (
           <>
-            <h3 className="section-title">CHOOSE A TIME</h3>
+            <h3 className="section-title">CHOOSE DETAILS</h3>
             <div className="booking-interface fade-in">
               <div className="booking-left">
                 <button className="back-btn" onClick={() => setActiveView('services')}>← Back to services</button>
                 {renderCalendar()}
+                
+                {/* --- BARBER SELECTION --- */}
+                <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+                  <h5 style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', color: '#555', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Select Barber</h5>
+                  <div className="timeslot-grid">
+                    {BARBERS.map(barber => (
+                      <button 
+                        key={barber}
+                        className={`time-btn ${selectedBarber === barber ? 'selected' : ''}`}
+                        onClick={() => setSelectedBarber(barber)}
+                      >
+                        {barber}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="timeslot-container">
                   {isLoadingSlots ? (
                     <p style={{textAlign: 'center', color: '#888'}}>Checking availability...</p>
@@ -445,16 +476,18 @@ function UserSite() {
 
               <div className="booking-right">
                 <div className="booking-summary-card">
-                  <h3>{selectedService.name}</h3>
+                  {/* FIXED: serviceName here */}
+                  <h3>{selectedService.serviceName || selectedService.name}</h3>
                   <p className="meta">{selectedService.duration} | ₱{selectedService.price} (Pay at shop)</p>
-                  <img src={selectedService.imageUrl || "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80"} alt={selectedService.name} className="detail-img" />
+                  {/* FIXED: serviceName here */}
+                  <img src={selectedService.imageUrl || "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80"} alt={selectedService.serviceName || selectedService.name} className="detail-img" />
                   <p className="desc">{selectedService.detail || "Experience a top-tier cut by our expert styling team."}</p>
                   
                   {bookingSuccess ? (
                     <div className="success-message fade-in">
                       <div className="success-icon">✓</div>
                       <h4>Booking Confirmed!</h4>
-                      <p>We'll see you on <strong>{selectedDate.toDateString()}</strong> at <strong>{selectedTime}</strong>.</p>
+                      <p>You're set with <strong>{selectedBarber}</strong> on <strong>{selectedDate.toDateString()}</strong> at <strong>{selectedTime}</strong>.</p>
                       <div className="booking-code-box">
                         <small>BOOKING REF:</small>
                         <span>{bookingRefCode}</span>
@@ -465,7 +498,7 @@ function UserSite() {
                     <button 
                       className="btn-primary confirm-btn" 
                       onClick={handleConfirmBooking}
-                      disabled={!selectedTime || isBooking}
+                      disabled={!selectedTime || !selectedBarber || isBooking}
                     >
                       {isBooking ? 'Processing...' : 'CONFIRM BOOKING'}
                     </button>
@@ -500,12 +533,13 @@ function UserSite() {
                                   <span className="status-label">{app.status}</span>
                                   <h5>{app.service}</h5>
                                   <p>{app.price ? `₱${app.price}` : 'Price TBD'}</p>
+                                  <p style={{marginTop: '5px', fontSize: '0.85rem', color: '#666'}}>Barber: {app.barber || 'Any'}</p> 
                               </div>
                               <div className="app-card-right">
                                   <p className="app-date">{new Date(app.date).toDateString()}</p>
                                   <p className="app-time">{app.time}</p>
                               </div>
-                              <p className="app-booking-code">Ref Code: <strong>{app.id.substring(0, 6).toUpperCase()}</strong></p>
+                              <p className="app-booking-code">Ref Code: <strong>{app.refCode || app.id.substring(0, 6).toUpperCase()}</strong></p>
                           </div>
                       ))}
                   </div>
@@ -578,10 +612,11 @@ function UserSite() {
           <button className="btn-outline-dark">— GET IN TOUCH —</button>
         </div>
         <div className="contact-map">
+          {/* --- FIXED GOOGLE MAPS IFRAME --- */}
           <iframe 
-            src="https://googleusercontent.com/maps.google.com/3"
+            src="https://maps.google.com/maps?q=East%20Sabellano%20Street,%20Cebu%20City&t=&z=15&ie=UTF8&iwloc=&output=embed"
             width="100%" height="100%" style={{ border: 0, minHeight: '350px', filter: 'grayscale(30%) contrast(1.2)' }} 
-            allowFullScreen="" loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="Location"
+            allowFullScreen="" loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="Fadedstudio Location"
           ></iframe>
         </div>
       </section>
@@ -660,8 +695,7 @@ function UserSite() {
         </div>
     </div>
   );
-
-  return (
+return (
     <div className="user-site">
       {renderHeader()}
 
@@ -671,16 +705,16 @@ function UserSite() {
 
       <footer className="site-footer">
         <div className="social-icon">
-           <a href="https://www.instagram.com/faded_studiocebu/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', display: 'flex' }}>
-             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-             </svg>
-           </a>
+          <a href="https://www.instagram.com/faded_studiocebu/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', display: 'block' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+            </svg>
+          </a>
         </div>
         <h2>Stay on the cutting-edge</h2>
-        <p className="newsletter-sub">Sign up to hear from us about specials, styling tips, and events.</p>
+        <p className="newsletter-sub">Sign up to hear from us about specials, sales, events, and fashion tips.</p>
         <div className="newsletter-form">
           <input type="email" placeholder="Email Address" />
           <button className="btn-outline-dark">— SIGN UP —</button>
