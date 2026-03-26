@@ -9,9 +9,10 @@ import cut1 from '../assets/cut1.png';
 import cut2 from '../assets/cut2.png';
 import cut3 from '../assets/cut3.png';
 import cut4 from '../assets/cut4.png';
+import philo from '../assets/philo.png';
 
 
-const BARBERS = ['Marcus', 'Julian', 'Desmond', 'Leo'];
+const BARBERS = ['Koji', 'Jkey', 'Luis'];
 
 function UserSite() {
   // --- UI STATE ---
@@ -143,10 +144,10 @@ function UserSite() {
 
     // --- NEW REGEX CHECK ---
     // Requires: At least 2 uppercase letters AND at least 1 special character
-    const passwordRegex = /^(?=(.*[A-Z]){2,})(?=(.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]){1,}).*$/;
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{6,}$/;
     
     if (!passwordRegex.test(signUpData.password)) {
-      setAuthError('Password must contain at least 2 capital letters and 1 special character.');
+      setAuthError('Password must contain at least 1 capital letters and 1 special character.');
       return; // Stop the function here so Firebase doesn't run
     }
 
@@ -403,11 +404,15 @@ function UserSite() {
         <h3 className="section-title">ABOUT FADEDSTUDIO</h3>
         <div className="about-grid">
           <div className="about-image">
-            <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=800" alt="Barber Tools" />
+            <img src={philo} alt="Barber Tools"style={{ width: '100%', maxWidth: '500px', height: 'auto', borderRadius: '8px', objectFit: 'cover' }} />
           </div>
-          <div className="about-text">
-            <h4>Our Philosophy</h4>
-            <p>At Fadedstudio, we believe that beautiful hair starts with healthy hair. That's why we use only the best products and techniques to ensure that your hair is healthy, strong, and vibrant. We also believe that every client is unique, and we strive to create a personalized experience that meets your individual needs.</p>
+         <div className="about-text">
+            <h4 style={{ fontSize: '32px', marginBottom: '20px', letterSpacing: '1px' }}>
+              Our Philosophy
+            </h4>
+            <p style={{ fontSize: '18px', lineHeight: '1.8', color: '#444' }}>
+              At Fadedstudio, we believe that beautiful hair starts with healthy hair. That's why we use only the best products and techniques to ensure that your hair is healthy, strong, and vibrant. We also believe that every client is unique, and we strive to create a personalized experience that meets your individual needs.
+            </p>
           </div>
         </div>
       </section>
@@ -679,7 +684,7 @@ function UserSite() {
             </div>
             
             <div style={{ textAlign: 'left', marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Password (min 6 chars, 2 capitals, 1 special)</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Password (min 6 chars, 1 capital, 1 special)</label>
                 <div className="password-input-container" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
                   <input 
                     type={isPasswordVisible ? 'text' : 'password'} 
