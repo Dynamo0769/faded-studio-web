@@ -5,6 +5,12 @@ import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'fire
 import './UserSite.css';
 import Booking from './Booking';
 
+import cut1 from '../assets/cut1.png';
+import cut2 from '../assets/cut2.png';
+import cut3 from '../assets/cut3.png';
+import cut4 from '../assets/cut4.png';
+
+
 const BARBERS = ['Marcus', 'Julian', 'Desmond', 'Leo'];
 
 function UserSite() {
@@ -38,12 +44,16 @@ function UserSite() {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingRefCode, setBookingRefCode] = useState('');
 
-  // High-quality placeholder images for the gallery
+
+   // Faded Studio Local Gallery Images
   const galleryImages = [
-    'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=1200',
-    'https://images.unsplash.com/photo-1593702284287-418d182fd9ff?auto=format&fit=crop&q=80&w=1200',
-    'https://images.unsplash.com/photo-1598908314732-07113901949b?auto=format&fit=crop&q=80&w=1200',
-    'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=1200'
+    'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&q=80&w=1200',
+    cut1,
+    cut2,
+    cut3,
+    cut4
+  
+    
   ];
 
   const allTimes = [
@@ -559,7 +569,7 @@ function UserSite() {
                   </div>
                 ) : (
                   <div className="account-details-block center-text">
-                    <p><strong>Email Address:</strong><br/> {currentUser.email}</p>
+                    <p><strong>Email Address:   `</strong>{currentUser.email}</p>
                     <p><strong>Status:</strong> Active Member</p>
                     <hr style={{margin: '20px 0', border: 'none', borderTop: '1px solid #eaeaea'}} />
                     <button className="btn-outline-dark" onClick={handleLogout}>SIGN OUT</button>
@@ -609,7 +619,7 @@ function UserSite() {
             <p>Open Today: 10:00 AM - 05:00 PM</p>
             <p>Sunday: Closed</p>
           </div>
-          <button className="btn-outline-dark">— GET IN TOUCH —</button>
+
         </div>
         <div className="contact-map">
           {/* --- FIXED GOOGLE MAPS IFRAME --- */}
@@ -629,27 +639,62 @@ function UserSite() {
         <p className="auth-subtitle">By creating an account, you may receive newsletters or promotions.</p>
         
         <form className="auth-form" onSubmit={handleSignUp}>
-            {authError && <p className="error-message">{authError}</p>}
-            
-            <input type="text" name="firstName" placeholder="First name" value={signUpData.firstName} onChange={handleSignUpChange} required />
-            <input type="text" name="lastName" placeholder="Last name" value={signUpData.lastName} onChange={handleSignUpChange} required />
-            <input type="email" name="email" placeholder="Email" value={signUpData.email} onChange={handleSignUpChange} required />
-            
-            <div className="password-input-container">
-              <input 
-                type={isPasswordVisible ? 'text' : 'password'} 
-                name="password" placeholder="Password (min 6 chars)" 
-                value={signUpData.password} onChange={handleSignUpChange} required minLength={6} 
-              />
-              <button type="button" className="password-toggle" onClick={() => setIsPasswordVisible(!isPasswordVisible)}>
-                {isPasswordVisible ? 'Hide' : 'Show'}
-              </button>
-            </div>
+    {authError && <p className="error-message">{authError}</p>}
+    
+    <div style={{ textAlign: 'left', marginBottom: '15px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>First Name</label>
+        <input type="text" name="firstName" value={signUpData.firstName} onChange={handleSignUpChange} required style={{ width: '100%' }} />
+    </div>
 
-            <input type="tel" name="phone" placeholder="Phone (optional)" value={signUpData.phone} onChange={handleSignUpChange} />
-            
-            <button className="btn-primary" type="submit" style={{width: '100%'}}>— CREATE ACCOUNT —</button>
-        </form>
+    <div style={{ textAlign: 'left', marginBottom: '15px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Last Name</label>
+        <input type="text" name="lastName" value={signUpData.lastName} onChange={handleSignUpChange} required style={{ width: '100%' }} />
+    </div>
+
+    <div style={{ textAlign: 'left', marginBottom: '15px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Email Address</label>
+        <input type="email" name="email" value={signUpData.email} onChange={handleSignUpChange} required style={{ width: '100%' }} />
+    </div>
+    
+    <div style={{ textAlign: 'left', marginBottom: '15px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Password (min 6 chars)</label>
+        <div className="password-input-container" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+          <input 
+            type={isPasswordVisible ? 'text' : 'password'} 
+            name="password" 
+            value={signUpData.password} onChange={handleSignUpChange} required minLength={6} 
+            style={{ width: '100%', paddingRight: '40px' }}
+          />
+          <button 
+            type="button" 
+            className="password-toggle" 
+            onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'absolute', right: '10px', display: 'flex' }}
+          >
+            {isPasswordVisible ? (
+              // EYE WITH SLASH (HIDE)
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            ) : (
+              // NORMAL EYE (SHOW)
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            )}
+          </button>
+        </div>
+    </div>
+
+    <div style={{ textAlign: 'left', marginBottom: '25px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Phone (optional)</label>
+        <input type="tel" name="phone" value={signUpData.phone} onChange={handleSignUpChange} style={{ width: '100%' }} />
+    </div>
+    
+    <button className="btn-primary" type="submit" style={{width: '100%'}}>— CREATE ACCOUNT —</button>
+</form>
         
         <button className="auth-link-text" onClick={() => setCurrentPage('signIn')}>
             Already have an account? Sign in

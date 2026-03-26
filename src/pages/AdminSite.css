@@ -1,54 +1,170 @@
-/* src/pages/AdminSite.css */
-.admin-layout {
-  display: flex;
-  min-height: 100vh;
-  background-color: #121826;
-  color: #fff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+/* --- BASE STYLES --- */
+.admin-dashboard { 
+  background-color: #FAFAFA; 
+  min-height: 100vh; 
+  color: #333; 
+  font-family: "Helvetica Neue", Arial, sans-serif;
 }
 
-.admin-nav {
-  width: 250px;
-  background-color: #0f141e;
-  padding: 30px 0;
-  border-right: 1px solid #2d3748;
-}
-
-.admin-logo {
-  text-align: center;
-  color: #eab308;
-  margin-bottom: 40px;
-  letter-spacing: 2px;
-}
-
-.nav-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.nav-links li {
-  padding: 15px 30px;
-  cursor: pointer;
-  color: #888;
-  font-weight: bold;
-  transition: all 0.2s;
-}
-
-.nav-links li:hover {
-  background-color: #1a202c;
-  color: #fff;
-}
-
-.nav-links li.active {
-  background-color: #1a202c;
-  color: #eab308;
-  border-left: 4px solid #eab308;
-}
-
-.admin-content {
-  flex: 1;
-  /* This ensures the AdminServices component fills the rest of the screen */
+/* --- HEADER --- */
+.admin-header { 
   display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  background: #fff; 
+  padding: 0 40px; 
+  height: 80px; 
+  border-bottom: 1px solid #EEE; 
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.admin-brand { 
+  font-weight: bold; 
+  letter-spacing: 2px; 
+  text-transform: uppercase;
+}
+
+.admin-brand span { 
+  color: #C9B497; /* YOUR ORIGINAL ACCENT COLOR */
+  font-weight: 300; 
+}
+
+.admin-nav-links { 
+  display: flex; 
+  gap: 30px; 
+  height: 100%; 
+}
+
+.admin-tab { 
+  background: none; 
+  border: none; 
+  cursor: pointer; 
+  color: #888; 
+  text-transform: uppercase; 
+  font-size: 0.8rem; 
+  letter-spacing: 1px; 
+  position: relative; 
+  height: 100%;
+  transition: 0.3s;
+}
+
+.admin-tab.active { color: #000; font-weight: bold; }
+.admin-tab.active::after { 
+  content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: #C9B497; 
+}
+
+/* --- MAIN LAYOUT (FIXES THE LEFT ALIGNMENT & GAP) --- */
+.admin-main { 
+  padding: 40px; 
+  max-width: 1400px; /* Widened slightly to fit the sidebar perfectly */
+  margin: 0 auto; /* This centers everything and fixes the right-side gap! */
+}
+
+.admin-layout-wrapper {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.admin-content-area {
+  flex: 1; /* Takes up all the remaining space on the left */
+  min-width: 0; 
+}
+
+/* --- THE NEW STATS SIDEBAR --- */
+.admin-sidebar {
+  width: 320px; /* Fixed width for the right side */
+  display: flex;
   flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 120px; /* Keeps it in view as you scroll down */
+}
+
+.stat-card {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  border: 1px solid #EEE;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  text-align: center;
+}
+
+.stat-card h3 {
+  margin: 0 0 10px 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 1px;
+}
+
+.stat-card .stat-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #333;
+  margin: 10px 0;
+}
+
+.stat-card .stat-value.highlight {
+  color: #C9B497; /* Uses your accent color for emphasis */
+}
+
+.stat-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #999;
+}
+
+/* --- SECTION HEADERS --- */
+.section-header h2 { font-weight: 400; margin-bottom: 5px; font-size: 1.8rem; }
+.section-header p { color: #777; font-size: 0.9rem; margin-bottom: 30px; }
+
+/* --- TABLES --- */
+.table-container { background: white; border: 1px solid #EEE; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); overflow: hidden;}
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th { padding: 15px 20px; background: #F9F9F9; text-align: left; font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+.admin-table td { padding: 15px 20px; border-top: 1px solid #EEE; font-size: 0.9rem; vertical-align: middle; }
+
+.bold-text { font-weight: 600; }
+.sub-text { font-size: 0.8rem; color: #888; display: block; margin-top: 4px; }
+.empty-text { text-align: center; padding: 40px !important; color: #999; font-style: italic; }
+
+/* --- BADGES & BUTTONS --- */
+.status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; display: inline-block; }
+.status-badge.confirmed, .status-badge.accepted { background: #E8F5E9; color: #2E7D32; }
+.status-badge.pending { background: #FFF3E0; color: #EF6C00; }
+.status-badge.completed { background: #E3F2FD; color: #1565C0; }
+.status-badge.declined, .status-badge.cancelled { background: #FFEBEE; color: #C62828; }
+
+.status-dropdown { padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.8rem; cursor: pointer; background: #fff;}
+
+.btn-action { padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75rem; transition: 0.2s; text-transform: uppercase; font-weight: 600; }
+.btn-action.accept { background: #333; color: white; }
+.btn-action.decline { background: white; border: 1px solid #ff4d4d; color: #ff4d4d; }
+.btn-action:hover { opacity: 0.8; }
+
+/* --- SERVICES GRID SPECIFIC --- */
+.services-admin-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; }
+.admin-form-card { background: white; padding: 25px; border-radius: 8px; border: 1px solid #EEE; box-shadow: 0 4px 15px rgba(0,0,0,0.02); height: fit-content; }
+.admin-form-card h3 { margin-bottom: 20px; font-weight: 400; }
+.admin-form input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+
+.services-list { display: flex; flex-direction: column; gap: 15px; }
+.admin-service-card { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px; border-radius: 8px; border: 1px solid #EEE; }
+.srv-info h4 { margin: 0 0 5px 0; font-size: 1.1rem; }
+.srv-info p { margin: 0; color: #666; font-size: 0.9rem; }
+
+/* --- UTILS --- */
+.loading-state { text-align: center; margin-top: 100px; font-size: 1.2rem; color: #888; }
+.fade-in { animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.btn-action.edit { 
+  background: white; 
+  border: 1px solid #333; 
+  color: #333; 
+}
+.btn-action.edit:hover {
+  background: #f5f5f5;
 }
