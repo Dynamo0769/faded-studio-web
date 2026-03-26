@@ -137,9 +137,19 @@ function UserSite() {
     setSignInData({ ...signInData, [e.target.name]: e.target.value });
   };
 
-  const handleSignUp = async (e) => {
+ const handleSignUp = async (e) => {
     e.preventDefault();
     setAuthError('');
+
+    // --- NEW REGEX CHECK ---
+    // Requires: At least 2 uppercase letters AND at least 1 special character
+    const passwordRegex = /^(?=(.*[A-Z]){2,})(?=(.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]){1,}).*$/;
+    
+    if (!passwordRegex.test(signUpData.password)) {
+      setAuthError('Password must contain at least 2 capital letters and 1 special character.');
+      return; // Stop the function here so Firebase doesn't run
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, signUpData.email, signUpData.password);
       const user = userCredential.user;
@@ -147,7 +157,7 @@ function UserSite() {
         uid: user.uid,
         firstName: signUpData.firstName,
         lastName: signUpData.lastName,
-        phone: signUpData.phone,
+        phone: signUpData.phone, // Phone is now required in the HTML
         email: signUpData.email,
         createdAt: serverTimestamp()
       });
@@ -651,105 +661,124 @@ function UserSite() {
         <p className="auth-subtitle">By creating an account, you may receive newsletters or promotions.</p>
         
         <form className="auth-form" onSubmit={handleSignUp}>
-    {authError && <p className="error-message">{authError}</p>}
-    
-    <div style={{ textAlign: 'left', marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>First Name</label>
-        <input type="text" name="firstName" value={signUpData.firstName} onChange={handleSignUpChange} required style={{ width: '100%' }} />
-    </div>
+            {authError && <p className="error-message">{authError}</p>}
+            
+            <div style={{ textAlign: 'left', marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>First Name</label>
+                <input type="text" name="firstName" value={signUpData.firstName} onChange={handleSignUpChange} required style={{ width: '100%' }} />
+            </div>
 
-    <div style={{ textAlign: 'left', marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Last Name</label>
-        <input type="text" name="lastName" value={signUpData.lastName} onChange={handleSignUpChange} required style={{ width: '100%' }} />
-    </div>
+            <div style={{ textAlign: 'left', marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Last Name</label>
+                <input type="text" name="lastName" value={signUpData.lastName} onChange={handleSignUpChange} required style={{ width: '100%' }} />
+            </div>
 
-    <div style={{ textAlign: 'left', marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Email Address</label>
-        <input type="email" name="email" value={signUpData.email} onChange={handleSignUpChange} required style={{ width: '100%' }} />
-    </div>
-    
-    <div style={{ textAlign: 'left', marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Password (min 6 chars)</label>
-        <div className="password-input-container" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-          <input 
-            type={isPasswordVisible ? 'text' : 'password'} 
-            name="password" 
-            value={signUpData.password} onChange={handleSignUpChange} required minLength={6} 
-            style={{ width: '100%', paddingRight: '40px' }}
-          />
-          <button 
-            type="button" 
-            className="password-toggle" 
-            onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'absolute', right: '10px', display: 'flex' }}
-          >
-            {isPasswordVisible ? (
-              // EYE WITH SLASH (HIDE)
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-              </svg>
-            ) : (
-              // NORMAL EYE (SHOW)
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-            )}
-          </button>
-        </div>
-    </div>
+            <div style={{ textAlign: 'left', marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Email Address</label>
+                <input type="email" name="email" value={signUpData.email} onChange={handleSignUpChange} required style={{ width: '100%' }} />
+            </div>
+            
+            <div style={{ textAlign: 'left', marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Password (min 6 chars, 2 capitals, 1 special)</label>
+                <div className="password-input-container" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                  <input 
+                    type={isPasswordVisible ? 'text' : 'password'} 
+                    name="password" 
+                    value={signUpData.password} onChange={handleSignUpChange} required minLength={6} 
+                    style={{ width: '100%', paddingRight: '40px' }}
+                  />
+                  <button 
+                    type="button" 
+                    className="password-toggle" 
+                    onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'absolute', right: '10px', display: 'flex' }}
+                  >
+                    {isPasswordVisible ? (
+                      // EYE WITH SLASH (HIDE)
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    ) : (
+                      // NORMAL EYE (SHOW)
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    )}
+                  </button>
+                </div>
+            </div>
 
-    <div style={{ textAlign: 'left', marginBottom: '25px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Phone (optional)</label>
-        <input type="tel" name="phone" value={signUpData.phone} onChange={handleSignUpChange} style={{ width: '100%' }} />
-    </div>
-    
-    <button className="btn-primary" type="submit" style={{width: '100%'}}>— CREATE ACCOUNT —</button>
-</form>
-        
-        <button className="auth-link-text" onClick={() => setCurrentPage('signIn')}>
-            Already have an account? Sign in
-        </button>
-          
-        <p className="captcha-text">
-            This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.
-        </p>
+            <div style={{ textAlign: 'left', marginBottom: '25px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Phone (required)</label>
+                <input type="tel" name="phone" value={signUpData.phone} onChange={handleSignUpChange} required style={{ width: '100%' }} />
+            </div>
+
+            <button type="submit" className="btn-primary" style={{ width: '100%' }}>SIGN UP</button>
+            
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                <button type="button" className="text-btn" onClick={() => setCurrentPage('signIn')} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', textDecoration: 'underline' }}>
+                    Already have an account? Sign In
+                </button>
+            </div>
+        </form>
     </div>
   );
 
-  const renderSignInPage = () => (
+ const renderSignInPage = () => (
     <div className="auth-page-container container-center fade-in">
         <h2 className="auth-title">SIGN IN</h2>
-        <p className="auth-subtitle">Enter your email and password to sign in.</p>
+        <p className="auth-subtitle">Welcome back to Fadedstudio.</p>
         
         <form className="auth-form" onSubmit={handleSignIn}>
             {authError && <p className="error-message">{authError}</p>}
             
-            <input type="email" name="email" placeholder="Email" value={signInData.email} onChange={handleSignInChange} required />
-            
-            <div className="password-input-container">
-              <input 
-                type={isPasswordVisible ? 'text' : 'password'} 
-                name="password" placeholder="Password" 
-                value={signInData.password} onChange={handleSignInChange} required 
-              />
-              <button type="button" className="password-toggle" onClick={() => setIsPasswordVisible(!isPasswordVisible)}>
-                {isPasswordVisible ? 'Hide' : 'Show'}
-              </button>
+            <div style={{ textAlign: 'left', marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Email Address</label>
+                <input type="email" name="email" value={signInData.email} onChange={handleSignInChange} required style={{ width: '100%' }} />
             </div>
             
-            <button className="btn-primary" type="submit" style={{width: '100%'}}>— SIGN IN —</button>
+            <div style={{ textAlign: 'left', marginBottom: '25px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Password</label>
+                <div className="password-input-container" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                  <input 
+                    type={isPasswordVisible ? 'text' : 'password'} 
+                    name="password" 
+                    value={signInData.password} onChange={handleSignInChange} required 
+                    style={{ width: '100%', paddingRight: '40px' }}
+                  />
+                  <button 
+                    type="button" 
+                    className="password-toggle" 
+                    onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'absolute', right: '10px', display: 'flex' }}
+                  >
+                    {isPasswordVisible ? (
+                      // EYE WITH SLASH (HIDE)
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    ) : (
+                      // NORMAL EYE (SHOW)
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    )}
+                  </button>
+                </div>
+            </div>
+
+            <button type="submit" className="btn-primary" style={{ width: '100%' }}>SIGN IN</button>
+            
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                <button type="button" className="text-btn" onClick={() => setCurrentPage('createAccount')} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', textDecoration: 'underline' }}>
+                    Don't have an account? Create one
+                </button>
+            </div>
         </form>
-        
-        <div className="auth-links-group">
-            <button className="auth-link-text" onClick={() => alert("Password recovery requires Firebase configuration.")}>
-              Forgot password?
-            </button>
-            <button className="auth-link-text" onClick={() => setCurrentPage('createAccount')}>
-              Don't have an account? Create one
-            </button>
-        </div>
     </div>
   );
 return (
