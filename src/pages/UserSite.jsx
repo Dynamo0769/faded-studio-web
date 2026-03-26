@@ -158,13 +158,25 @@ function UserSite() {
     }
   };
 
-  const handleSignIn = async (e) => {
+ const handleSignIn = async (e) => {
     e.preventDefault();
     setAuthError('');
     try {
       await signInWithEmailAndPassword(auth, signInData.email, signInData.password);
+      
+      // --- THE ADMIN REDIRECT ---
+      if (signInData.email === 'liam.fermo@gmail.com') {
+        setSignInData({ email: '', password: '' });
+        // Make sure '/admin' matches your actual admin URL path!
+        window.location.href = '/admin'; 
+        return; 
+      }
+
+      // --- NORMAL USER LOGIN ---
       setSignInData({ email: '', password: '' });
-      setCurrentPage('home');
+      setCurrentPage('home'); 
+      // (Or wherever normal users go, change 'home' if needed)
+      
     } catch (error) {
       setAuthError('Invalid email or password.');
     }
