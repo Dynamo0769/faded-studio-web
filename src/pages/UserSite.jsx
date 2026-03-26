@@ -591,7 +591,7 @@ function UserSite() {
                   </div>
                 ) : (
                   <div className="account-details-block center-text">
-                    <p><strong>Email Address:   `</strong>{currentUser.email}</p>
+                    <p><strong>Email Address:  </strong>{currentUser.email}</p>
                     <p><strong>Status:</strong> Active Member</p>
                     <hr style={{margin: '20px 0', border: 'none', borderTop: '1px solid #eaeaea'}} />
                     <button className="btn-outline-dark" onClick={handleLogout}>SIGN OUT</button>

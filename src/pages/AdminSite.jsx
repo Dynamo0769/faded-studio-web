@@ -173,7 +173,15 @@ function AdminSite() {
                           <tr key={appt.id}>
                             <td className="bold-text">{appt.refCode || 'N/A'}</td>
                             <td>{appt.date} <br/><span className="sub-text">{appt.time}</span></td>
-                            <td>{appt.userEmail}</td>
+                            
+                            {/* HERE IS WHERE WE SHOW THE PHONE NUMBER UNDER THE EMAIL */}
+                            <td>
+                              {appt.userEmail} <br/>
+                              <span className="sub-text" style={{ color: '#888', fontWeight: 'bold' }}>
+                                📞 {clients.find(c => c.email === appt.userEmail || c.id === appt.userId)?.phone || 'No Phone Found'}
+                              </span>
+                            </td>
+
                             <td>{appt.barber}</td>
                             <td>{appt.service} <br/><span className="sub-text">₱{appt.price}</span></td>
                             <td>
